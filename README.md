@@ -1,16 +1,51 @@
 # Y
 
-yyyyyyyyyyyyyy
+Social media backend REST API built with Django. Handles users, posts, likes, comments, and follows.
 
-yyyyyy
+Contains:
 
-## Building
+- Django REST framework
+- JWT auth
+- PostgreSQL
 
-1. `python3 -m venv .venv`
-2. `source .venv/bin/activate`
-3. `pip3 install -r requirements.txt`
-4. `python3 src/manage.py migrate`
-5. `python3 src/manage.py runserver`
+## Setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+Copy `.env` and fill in your credentials:
+
+```bash
+cp src/.env src/.env.local  # or just edit src/.env directly
+```
+
+```bash
+python3 src/manage.py makemigrations accounts posts
+python3 src/manage.py migrate
+python3 src/manage.py runserver
+```
+
+## API
+
+All endpoints are prefixed with `/api/`. Authentication uses `Bearer <token>` headers.
+
+| Method               | Endpoint                             | Auth | Description               |
+| -------------------- | ------------------------------------ | ---- | ------------------------- |
+| POST                 | `/auth/token/`                       | No   | Login                     |
+| POST                 | `/auth/token/refresh/`               | No   | Refresh token             |
+| POST                 | `/accounts/register/`                | No   | Register                  |
+| GET / PATCH          | `/accounts/profile/`                 | Yes  | Own profile               |
+| GET                  | `/accounts/users/<username>/`        | Yes  | User profile              |
+| POST / DELETE        | `/accounts/users/<username>/follow/` | Yes  | Follow / unfollow         |
+| GET / POST           | `/posts/`                            | Yes  | Global feed / create post |
+| GET                  | `/posts/feed/`                       | Yes  | Following-only feed       |
+| GET / PATCH / DELETE | `/posts/<id>/`                       | Yes  | Post detail               |
+| POST / DELETE        | `/posts/<id>/like/`                  | Yes  | Like / unlike             |
+| GET / POST           | `/posts/<id>/comments/`              | Yes  | Comments                  |
+| GET / PATCH / DELETE | `/posts/<id>/comments/<id>/`         | Yes  | Comment detail            |
 
 ## License
 
