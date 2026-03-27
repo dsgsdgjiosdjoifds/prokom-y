@@ -32,20 +32,20 @@ python3 src/manage.py runserver
 
 All endpoints are prefixed with `/api/`. Authentication uses `Bearer <token>` headers.
 
-| Method               | Endpoint                             | Auth | Description               |
-| -------------------- | ------------------------------------ | ---- | ------------------------- |
-| POST                 | `/auth/token/`                       | No   | Login                     |
-| POST                 | `/auth/token/refresh/`               | No   | Refresh token             |
-| POST                 | `/accounts/register/`                | No   | Register                  |
-| GET / PATCH          | `/accounts/profile/`                 | Yes  | Own profile               |
-| GET                  | `/accounts/users/<username>/`        | Yes  | User profile              |
-| POST / DELETE        | `/accounts/users/<username>/follow/` | Yes  | Follow / unfollow         |
-| GET / POST           | `/posts/`                            | Yes  | Global feed / create post |
-| GET                  | `/posts/feed/`                       | Yes  | Following-only feed       |
-| GET / PATCH / DELETE | `/posts/<id>/`                       | Yes  | Post detail               |
-| POST / DELETE        | `/posts/<id>/like/`                  | Yes  | Like / unlike             |
-| GET / POST           | `/posts/<id>/comments/`              | Yes  | Comments                  |
-| GET / PATCH / DELETE | `/posts/<id>/comments/<id>/`         | Yes  | Comment detail            |
+| Method               | Endpoint                    | Auth | Description               |
+| -------------------- | --------------------------- | ---- | ------------------------- |
+| POST                 | `/auth/login`               | No   | Login                     |
+| POST                 | `/auth/register`            | No   | Register                  |
+| POST                 | `/auth/refresh`             | No   | Refresh token             |
+| GET / PATCH          | `/users/me`                 | Yes  | Own profile               |
+| GET                  | `/users/<username>`         | Yes  | User profile              |
+| POST / DELETE        | `/users/<username>/follow`  | Yes  | Follow / unfollow         |
+| GET / POST           | `/posts`                    | Yes  | Global feed / create post |
+| GET                  | `/posts/feed`               | Yes  | Following-only feed       |
+| GET / PATCH / DELETE | `/posts/<id>`               | Yes  | Post detail               |
+| POST / DELETE        | `/posts/<id>/like`          | Yes  | Like / unlike             |
+| GET / POST           | `/posts/<id>/comments`      | Yes  | Comments                  |
+| GET / PATCH / DELETE | `/posts/<id>/comments/<id>` | Yes  | Comment detail            |
 
 ## License
 
