@@ -1,42 +1,51 @@
-from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
-from django.contrib.auth import login, logout, authenticate
-from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Follow
+from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
 
 
-def login_user(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-
-    if request.method == 'POST':
-        user = authenticate(username=request.POST['username'], password=request.POST['password'])
-        if user is not None:
-            login(request, user)
-            if request.session.get('next'):
-                return redirect(request.session.pop('next'))
-            return redirect('home')
-        else:
-            messages.error(request, 'Invalid credentials')
-            return redirect('login_user')
-
-    if request.GET.get('next'):
-        request.session['next'] = request.GET['next']
-
-    return render(request, 'accounts/login.html')
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
 
-def register(request):
-    if request.user.is_authenticated:
-        return redirect('home')
+class OwnProfileView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
-    if request.method == 'POST':
-        user = User.objects.create_user(request.POST['username'], request.POST['email'], request.POST['password'])
-        login(request, user)
-        return redirect('home')
+    def get_object(self):
+        return self.request.user
 
-    return render(request, 'accounts/register.html')
+    def patch(self, request):
+        serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(request.user).data)
 
 
-def logout_user(request):
-    logout(request)
-    return redirect('home')
+class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+    queryset = User.objects.select_related('profile')
+
+
+class FollowView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, username):
+        target = get_object_or_404(User, username=username)
+        if target == request.user:
+            return Response({'detail': 'You cannot follow yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+        Follow.objects.get_or_create(follower=request.user, following=target)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request, username):
+        target = get_object_or_404(User, username=username)
+        Follow.objects.filter(follower=request.user, following=target).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
