@@ -19,7 +19,7 @@ pip3 install -r requirements.txt
 Copy `.env` and fill in your credentials:
 
 ```bash
-cp src/.env src/.env.local  # or just edit src/.env directly
+cp src/.env.example src/.env
 ```
 
 ```bash
