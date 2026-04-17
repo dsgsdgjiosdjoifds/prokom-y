@@ -29,6 +29,24 @@ class UserProfileView(generics.RetrieveAPIView):
     queryset = User.objects.select_related('profile')
 
 
+class FollowersListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        target = get_object_or_404(User, username=self.kwargs['username'])
+        return User.objects.filter(following__following=target).select_related('profile')
+
+
+class FollowingListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        target = get_object_or_404(User, username=self.kwargs['username'])
+        return User.objects.filter(followers__follower=target).select_related('profile')
+
+
 class FollowView(APIView):
     permission_classes = [IsAuthenticated]
 
