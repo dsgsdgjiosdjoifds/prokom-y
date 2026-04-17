@@ -25,6 +25,17 @@ def post_queryset(user):
     )
 
 
+class PostSearchView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        q = self.request.query_params.get('q', '').strip()
+        if not q:
+            return Post.objects.none()
+        return post_queryset(self.request.user).filter(content__icontains=q)
+
+
 class PostListCreateView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]

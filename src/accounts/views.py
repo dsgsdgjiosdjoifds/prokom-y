@@ -9,6 +9,17 @@ from .models import Follow
 from .serializers import ProfileSerializer, UserSerializer
 
 
+class UserSearchView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        q = self.request.query_params.get('q', '').strip()
+        if not q:
+            return User.objects.none()
+        return User.objects.filter(username__icontains=q).select_related('profile')
+
+
 class OwnProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
