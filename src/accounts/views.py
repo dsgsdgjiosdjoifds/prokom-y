@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +9,14 @@ from rest_framework.views import APIView
 from .models import Follow
 from .serializers import ProfileSerializer, UserSerializer
 
-
+@extend_schema(
+    tags=['Accounts'],
+    summary='Search users',
+    description='Search users by username (case-insensitive substring match). Returns an empty list when `q` is omitted or blank.',
+    parameters=[
+        OpenApiParameter(name='q', location=OpenApiParameter.QUERY, description='Search query string.', required=False, type=str),
+    ],
+)
 class UserSearchView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -20,6 +28,13 @@ class UserSearchView(generics.ListAPIView):
         return User.objects.filter(username__icontains=q).select_related('profile')
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Accounts'],
+        summary='Get own profile',
+        description='Returns the authenticated user\'s profile including follower/following counts.',
+    ),
+)
 class OwnProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -27,6 +42,13 @@ class OwnProfileView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Update own profile',
+        description='Partially update the authenticated user\'s profile (bio, avatar_url).',
+        request=ProfileSerializer,
+        responses={200: UserSerializer},
+    )
     def patch(self, request):
         serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -34,12 +56,22 @@ class OwnProfileView(generics.RetrieveAPIView):
         return Response(UserSerializer(request.user).data)
 
 
+@extend_schema(
+    tags=['Accounts'],
+    summary='Get user profile by username',
+    description='Returns a public user profile. Does not require authentication.',
+)
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     lookup_field = 'username'
     queryset = User.objects.select_related('profile')
 
 
+@extend_schema(
+    tags=['Accounts'],
+    summary='List followers',
+    description='Returns a paginated list of users who follow the specified user.',
+)
 class FollowersListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -49,6 +81,11 @@ class FollowersListView(generics.ListAPIView):
         return User.objects.filter(following__following=target).select_related('profile')
 
 
+@extend_schema(
+    tags=['Accounts'],
+    summary='List following',
+    description='Returns a paginated list of users that the specified user follows.',
+)
 class FollowingListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -61,6 +98,16 @@ class FollowingListView(generics.ListAPIView):
 class FollowView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Follow a user',
+        description='Follow the specified user. Idempotent - following an already-followed user is a no-op.',
+        responses={
+            204: OpenApiResponse(description='Successfully followed.'),
+            400: OpenApiResponse(description='Cannot follow yourself.'),
+            404: OpenApiResponse(description='User not found.'),
+        },
+    )
     def post(self, request, username):
         target = get_object_or_404(User, username=username)
         if target == request.user:
@@ -68,6 +115,15 @@ class FollowView(APIView):
         Follow.objects.get_or_create(follower=request.user, following=target)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @extend_schema(
+        tags=['Accounts'],
+        summary='Unfollow a user',
+        description='Unfollow the specified user. Idempotent \- unfollowing a non-followed user is a no-op.',
+        responses={
+            204: OpenApiResponse(description='Successfully unfollowed.'),
+            404: OpenApiResponse(description='User not found.'),
+        },
+    )
     def delete(self, request, username):
         target = get_object_or_404(User, username=username)
         Follow.objects.filter(follower=request.user, following=target).delete()

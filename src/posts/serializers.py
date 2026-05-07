@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Comment, Like, Post
@@ -30,8 +31,9 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['id', 'author', 'content', 'created_at', 'updated_at', 'likes_count', 'comments_count', 'is_liked']
         read_only_fields = ['id', 'author', 'created_at', 'updated_at']
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_liked(self, obj):
-        # Uses the prefetched 'user_likes' attr set in the view queryset — no extra query per post
+        # Uses the prefetched 'user_likes' attr set in the view queryset - no extra query per post
         user_likes = getattr(obj, 'user_likes', None)
         if user_likes is not None:
             return len(user_likes) > 0
