@@ -23,6 +23,7 @@ def post_queryset(user):
         .prefetch_related(
             Prefetch('likes', queryset=Like.objects.filter(user=user), to_attr='user_likes')
         )
+        .order_by('-created_at')
     )
 
 
@@ -216,7 +217,7 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Comment.objects.filter(post_id=self.kwargs['post_pk']).select_related('author')
+        return Comment.objects.filter(post_id=self.kwargs['pk']).select_related('author')
 
     def get_object(self):
         return get_object_or_404(self.get_queryset(), pk=self.kwargs['comment_pk'])

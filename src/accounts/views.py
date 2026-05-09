@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -63,6 +63,7 @@ class OwnProfileView(generics.RetrieveAPIView):
 )
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
     lookup_field = 'username'
     queryset = User.objects.select_related('profile')
 
