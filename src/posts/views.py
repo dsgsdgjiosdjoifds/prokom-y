@@ -3,6 +3,7 @@ from django.db.models import Count, Prefetch
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -115,17 +116,15 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return post_queryset(self.request.user)
 
-    def update(self, request, *args, **kwargs):
-        post = self.get_object()
-        if post.author != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        return super().update(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        if serializer.instance.author != self.request.user:
+            raise PermissionDenied()
+        serializer.save()
 
-    def destroy(self, request, *args, **kwargs):
-        post = self.get_object()
-        if post.author != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(request, *args, **kwargs)
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied()
+        instance.delete()
 
 
 class LikeView(APIView):
@@ -155,6 +154,7 @@ class LikeView(APIView):
         },
     )
     def delete(self, request, pk):
+        get_object_or_404(Post, pk=pk)
         Like.objects.filter(user=request.user, post_id=pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -180,6 +180,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        get_object_or_404(Post, pk=self.kwargs['pk'])
         return Comment.objects.filter(post_id=self.kwargs['pk']).select_related('author')
 
     def perform_create(self, serializer):
@@ -222,14 +223,12 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return get_object_or_404(self.get_queryset(), pk=self.kwargs['comment_pk'])
 
-    def update(self, request, *args, **kwargs):
-        comment = self.get_object()
-        if comment.author != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        return super().update(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        if serializer.instance.author != self.request.user:
+            raise PermissionDenied()
+        serializer.save()
 
-    def destroy(self, request, *args, **kwargs):
-        comment = self.get_object()
-        if comment.author != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(request, *args, **kwargs)
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied()
+        instance.delete()

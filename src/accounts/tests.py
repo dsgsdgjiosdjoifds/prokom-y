@@ -1,13 +1,9 @@
-from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from test_utils import make_user
 from .models import Follow
-
-
-def make_user(username, password='pass1234'):
-    return User.objects.create_user(username=username, password=password)
 
 
 class UserSearchViewTests(APITestCase):

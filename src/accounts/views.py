@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Follow
-from .serializers import ProfileSerializer, UserSerializer
+from .serializers import ProfileSerializer, PublicUserSerializer, UserSerializer
 
 @extend_schema(
     tags=['Accounts'],
@@ -18,7 +18,7 @@ from .serializers import ProfileSerializer, UserSerializer
     ],
 )
 class UserSearchView(generics.ListAPIView):
-    serializer_class = UserSerializer
+    serializer_class = PublicUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -35,9 +35,10 @@ class UserSearchView(generics.ListAPIView):
         description='Returns the authenticated user\'s profile including follower/following counts.',
     ),
 )
-class OwnProfileView(generics.RetrieveAPIView):
+class OwnProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'patch', 'head', 'options']
 
     def get_object(self):
         return self.request.user
@@ -62,7 +63,7 @@ class OwnProfileView(generics.RetrieveAPIView):
     description='Returns a public user profile. Does not require authentication.',
 )
 class UserProfileView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+    serializer_class = PublicUserSerializer
     permission_classes = [AllowAny]
     lookup_field = 'username'
     queryset = User.objects.select_related('profile')
@@ -74,7 +75,7 @@ class UserProfileView(generics.RetrieveAPIView):
     description='Returns a paginated list of users who follow the specified user.',
 )
 class FollowersListView(generics.ListAPIView):
-    serializer_class = UserSerializer
+    serializer_class = PublicUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -88,7 +89,7 @@ class FollowersListView(generics.ListAPIView):
     description='Returns a paginated list of users that the specified user follows.',
 )
 class FollowingListView(generics.ListAPIView):
-    serializer_class = UserSerializer
+    serializer_class = PublicUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
